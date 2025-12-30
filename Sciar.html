@@ -1,0 +1,1654 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Ophi App - MEP Tool</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+  /* ======= CSS VARIABLES ======= */
+  :root {
+    --blue: #2B1E6F;
+    --muted: #6b7a90;
+    --bg: #f6f8fb;
+    --card: #ffffff;
+    --accent: #E93B8C;
+    --text: #0b2233;
+    --success: #2b9f6b;
+    --warning: #e67e22;
+    --danger: #e74c3c;
+    --border: rgba(0,0,0,0.1);
+    --shadow: 0 4px 12px rgba(8,30,65,0.04);
+    --transition: all 0.2s ease;
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  }
+  
+  [data-theme='dark'] {
+    --bg: #071022;
+    --card: #071829;
+    --text: #e7f0fb;
+    --muted: #9fb0c9;
+    --accent: #FF4FB8;
+    --border: rgba(255,255,255,0.1);
+    --shadow: 0 4px 12px rgba(0,0,0,0.3);
+  }
+
+  /* ======= LOADING SCREEN ======= */
+  #loading-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    transition: opacity 0.5s ease-out;
+  }
+
+  [data-theme='dark'] #loading-screen {
+    background: linear-gradient(135deg, #071022 0%, #0b0b12 100%);
+  }
+
+  .logo-container {
+    width: 200px;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 2rem;
+    animation: logoFloat 3s ease-in-out infinite;
+  }
+
+  .scieb-logo {
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: #667eea;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .loading-text {
+    color: var(--text);
+    font-size: 1.2rem;
+    font-weight: 600;
+    opacity: 0.95;
+    animation: fadeInOut 2s ease-in-out infinite;
+  }
+
+  .loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid rgba(0,0,0,0.08);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-top: 1rem;
+  }
+
+  [data-theme='dark'] .loading-text { color: white; }
+  [data-theme='dark'] .loading-spinner { border: 4px solid rgba(255,255,255,0.12); border-top-color: white; }
+
+  @keyframes logoFloat {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+  }
+
+  @keyframes fadeInOut {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* ======= BASE STYLES ======= */
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ======= HEADER ======= */
+  header {
+    background: var(--card);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow);
+  }
+
+  .header-logo {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 12px;
+  }
+
+  header h1 {
+    font-size: 16px;
+    margin: 0;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .controls {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .icon-btn {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text);
+    transition: var(--transition);
+    font-weight: 600;
+    font-size: 12px;
+  }
+
+  .icon-btn:hover {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(11,98,198,0.3);
+  }
+
+  /* ======= MAIN LAYOUT ======= */
+  .wrap {
+    max-width: 1200px;
+    margin: 20px auto;
+    padding: 0 16px;
+  }
+
+  /* ======= TABS ======= */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+    padding: 4px;
+    background: var(--card);
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+  }
+
+  .tab {
+    background: transparent;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: none;
+    font-weight: 600;
+    font-size: 13px;
+    white-space: nowrap;
+    transition: var(--transition);
+    color: var(--muted);
+    position: relative;
+  }
+
+  .tab:hover {
+    background: var(--bg);
+    color: var(--accent);
+  }
+
+  .tab.active {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 2px 8px rgba(11,98,198,0.3);
+  }
+
+  /* ======= PANELS ======= */
+  .panel {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    margin-bottom: 16px;
+    display: none;
+    animation: fadeIn 0.3s ease;
+  }
+
+  .panel.active {
+    display: block;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .panel h2 {
+    font-size: 18px;
+    margin-bottom: 16px;
+    color: var(--accent);
+    font-weight: 700;
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 8px;
+  }
+
+  /* ======= GRIDS ======= */
+  .grid2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  .grid3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+  }
+
+  /* ======= FORM ELEMENTS ======= */
+  label {
+    display: block;
+    font-size: 13px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    font-weight: 600;
+  }
+
+  input, select, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 14px;
+    background: var(--card);
+    color: var(--text);
+    transition: var(--transition);
+    font-family: inherit;
+  }
+
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(11,98,198,0.1);
+  }
+
+  input:hover, select:hover {
+    border-color: var(--accent);
+  }
+
+  .row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .row > div {
+    flex: 1;
+  }
+
+  /* ======= BUTTONS ======= */
+  .btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 8px rgba(11,98,198,0.3);
+  }
+
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(11,98,198,0.4);
+  }
+
+  .btn:active {
+    transform: translateY(0);
+  }
+
+  .btn-success {
+    background: var(--success);
+    box-shadow: 0 2px 8px rgba(43,159,107,0.3);
+  }
+
+  .btn-warning {
+    background: var(--warning);
+    box-shadow: 0 2px 8px rgba(230,126,34,0.3);
+  }
+
+  .btn-danger {
+    background: var(--danger);
+    box-shadow: 0 2px 8px rgba(231,76,60,0.3);
+  }
+
+  .btn-outline {
+    background: transparent;
+    color: var(--accent);
+    border: 2px solid var(--accent);
+    box-shadow: none;
+  }
+
+  .btn-outline:hover {
+    background: var(--accent);
+    color: white;
+  }
+
+  /* ======= RESULTS & MESSAGES ======= */
+  .result {
+    margin-top: 12px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    background: rgba(11,98,198,0.1);
+    border-left: 4px solid var(--accent);
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 14px;
+    animation: slideIn 0.3s ease;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .result.success {
+    background: rgba(43,159,107,0.1);
+    border-left-color: var(--success);
+    color: var(--success);
+  }
+
+  .result.warning {
+    background: rgba(230,126,34,0.1);
+    border-left-color: var(--warning);
+    color: var(--warning);
+  }
+
+  .result.danger {
+    background: rgba(231,76,60,0.1);
+    border-left-color: var(--danger);
+    color: var(--danger);
+  }
+
+  /* ======= INFO BOXES ======= */
+  .info-box {
+    background: rgba(11,98,198,0.05);
+    padding: 12px;
+    border-radius: 8px;
+    border-left: 3px solid var(--accent);
+    margin: 12px 0;
+    font-size: 13px;
+  }
+
+  .recommendation {
+    background: rgba(43,159,107,0.1);
+    padding: 10px 12px;
+    border-radius: 8px;
+    border-left: 3px solid var(--success);
+    margin: 8px 0;
+    font-size: 13px;
+  }
+
+  .warning-box {
+    background: rgba(230,126,34,0.1);
+    padding: 10px 12px;
+    border-radius: 8px;
+    border-left: 3px solid var(--warning);
+    margin: 8px 0;
+    font-size: 13px;
+  }
+
+  .section-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 16px 0 10px 0;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--border);
+  }
+
+  /* ======= FITTINGS & CHIPS ======= */
+  .fittings-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .fitting {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .fitting input {
+    padding: 8px 10px;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  .chip {
+    background: var(--bg);
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 2px solid var(--border);
+    color: var(--text);
+    font-weight: 600;
+    font-size: 12px;
+    cursor: pointer;
+    transition: var(--transition);
+  }
+
+  .chip:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .chip.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  /* ======= FOOTER ======= */
+  footer {
+    text-align: center;
+    padding: 24px 0;
+    font-size: 13px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    margin-top: 40px;
+  }
+
+  /* ======= RESPONSIVE ======= */
+  @media(max-width: 768px) {
+    .grid2, .grid3 {
+      grid-template-columns: 1fr;
+    }
+    
+    .tabs {
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    
+    header {
+      padding: 10px 12px;
+    }
+    
+    .wrap {
+      margin: 12px auto;
+      padding: 0 12px;
+    }
+    
+    .panel {
+      padding: 16px;
+    }
+
+    header h1 {
+      font-size: 14px;
+    }
+
+    .controls {
+      gap: 6px;
+    }
+  }
+
+  /* ======= UTILITIES ======= */
+  .small {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .mt-2 { margin-top: 12px; }
+  .mb-2 { margin-bottom: 12px; }
+  
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    opacity: 1;
+  }
+</style>
+</head>
+<body>
+
+<!-- Loading Screen -->
+<div id="loading-screen">
+  <div class="logo-container">
+    <svg width="140" height="140" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="octoGradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#2B1E6F"/>
+          <stop offset="100%" stop-color="#E93B8C"/>
+        </linearGradient>
+      </defs>
+      <path d="M256 72 C160 72 96 136 96 224 C96 288 128 320 160 336 V352 C160 384 144 416 112 432 C96 440 96 464 120 464 C160 464 192 432 208 400 C224 432 256 464 256 464 C256 464 288 432 304 400 C320 432 352 464 392 464 C416 464 416 440 400 432 C368 416 352 384 352 352 V336 C384 320 416 288 416 224 C416 136 352 72 256 72 Z" fill="url(#octoGradient)"/>
+      <circle cx="220" cy="200" r="20" fill="white"/>
+    </svg>
+  </div>
+  <div class="loading-text">Ophi App</div>
+  <div class="loading-spinner"></div>
+</div>
+
+<!-- Main App -->
+<div id="app-content" style="display: none;">
+<!-- Fallback: hide loading screen if main JS fails to run -->
+<script>
+  (function(){
+    try {
+      // If the app hasn't shown after 3s, remove the loading overlay so UI is accessible
+      setTimeout(() => {
+        const loadScreen = document.getElementById('loading-screen');
+        const appContent = document.getElementById('app-content');
+        if (loadScreen && loadScreen.style.opacity !== '0') {
+          loadScreen.style.transition = 'opacity 0.6s ease-out';
+          loadScreen.style.opacity = '0';
+          if (appContent) appContent.style.display = 'block';
+          setTimeout(() => { if (loadScreen) loadScreen.style.display = 'none'; }, 700);
+        }
+      }, 3000);
+    } catch (e) {
+      // silent fail
+    }
+  })();
+</script>
+<header>
+  <div class="header-logo">
+    <svg width="32" height="32" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block;" id="logo-light">
+      <defs>
+        <linearGradient id="octoGradientLight" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#2B1E6F"/>
+          <stop offset="100%" stop-color="#E93B8C"/>
+        </linearGradient>
+      </defs>
+      <path d="M256 72 C160 72 96 136 96 224 C96 288 128 320 160 336 V352 C160 384 144 416 112 432 C96 440 96 464 120 464 C160 464 192 432 208 400 C224 432 256 464 256 464 C256 464 288 432 304 400 C320 432 352 464 392 464 C416 464 416 440 400 432 C368 416 352 384 352 352 V336 C384 320 416 288 416 224 C416 136 352 72 256 72 Z" fill="url(#octoGradientLight)"/>
+      <circle cx="220" cy="200" r="20" fill="white"/>
+    </svg>
+    <svg width="32" height="32" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: none;" id="logo-dark">
+      <defs>
+        <linearGradient id="octoDarkGradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#7C5CFF"/>
+          <stop offset="100%" stop-color="#FF4FB8"/>
+        </linearGradient>
+        <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="12" result="blur"/>
+          <feMerge>
+            <feMergeNode in="blur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+      </defs>
+      <path d="M256 72 C160 72 96 136 96 224 C96 288 128 320 160 336 V352 C160 384 144 416 112 432 C96 440 96 464 120 464 C160 464 192 432 208 400 C224 432 256 464 256 464 C256 464 288 432 304 400 C320 432 352 464 392 464 C416 464 416 440 400 432 C368 416 352 384 352 352 V336 C384 320 416 288 416 224 C416 136 352 72 256 72 Z" fill="url(#octoDarkGradient)" filter="url(#softGlow)"/>
+      <circle cx="220" cy="200" r="18" fill="#0B0B12"/>
+    </svg>
+  </div>
+  <h1 id="app_title">Ophi- MEP assistant</h1>
+  <div class="controls">
+    <button class="icon-btn" id="lang_toggle" title="Switch language">EN</button>
+    <button class="icon-btn" id="theme_toggle" title="Toggle theme">
+      <i class="fa-solid fa-moon" style="font-size:14px"></i>
+    </button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="tabs" id="tabs" role="tablist">
+    <div id="tab_pa" class="tab active" role="tab" aria-controls="pa" data-tab="pa" data-i18n="pressure_tab">Pressure Loss</div>
+    <div id="tab_duct" class="tab" role="tab" aria-controls="duct" data-tab="duct" data-i18n="duct_tab">Duct Sizing</div>
+    <div id="tab_plumbing" class="tab" role="tab" aria-controls="plumbing" data-tab="plumbing" data-i18n="plumbing_tab">Plumbing</div>
+    <div id="tab_ms" class="tab" role="tab" aria-controls="ms" data-tab="ms" data-i18n="velocity_tab">Velocity</div>
+    <div id="tab_lwlp" class="tab" role="tab" aria-controls="lwlp" data-tab="lwlp" data-i18n="acoustic_tab">Acoustic</div>
+    <div id="tab_about" class="tab" role="tab" aria-controls="about" data-tab="about" data-i18n="about_tab">About Us</div>
+  </div>
+
+  <!-- Pressure Panel -->
+  <section id="pa" class="panel active" role="tabpanel" aria-labelledby="tab_pa">
+    <h2 data-i18n="pa_title">Pressure Loss Calculator</h2>
+    <div class="grid2">
+      <div>
+        <label data-i18n="geometry">Geometry</label>
+        <select id="pa_shape">
+          <option value="circular" data-i18n="circular">Circular Duct</option>
+          <option value="rectangular" data-i18n="rectangular">Rectangular Duct</option>
+        </select>
+        
+        <div id="circular_inputs" style="margin-top:12px">
+          <label for="pa_q" data-i18n="flow_q">Flow rate Q (m³/h)</label>
+          <input id="pa_q" type="number" step="any" placeholder="500" aria-label="Flow rate Q">
+          <label for="pa_d" style="margin-top:12px" data-i18n="diameter">Diameter D (mm)</label>
+          <input id="pa_d" type="number" step="any" placeholder="200" aria-label="Diameter D">
+        </div>
+        
+        <div id="rect_inputs" style="display:none; margin-top:12px">
+          <label for="pa_q_rect" data-i18n="flow_q">Flow rate Q (m³/h)</label>
+          <input id="pa_q_rect" type="number" step="any" placeholder="500" aria-label="Flow rate Q">
+          <div class="row" style="margin-top:12px">
+            <div>
+              <label for="rect_a" data-i18n="width">Width a (mm)</label>
+              <input id="rect_a" type="number" step="any" placeholder="500" aria-label="Width a">
+            </div>
+            <div>
+              <label for="rect_b" data-i18n="height">Height b (mm)</label>
+              <input id="rect_b" type="number" step="any" placeholder="200" aria-label="Height b">
+            </div>
+          </div>
+        </div>
+
+        <div class="info-box">
+          <div class="small" data-i18n="material_note">Material: Galvanized steel (ε=0.15mm)</div>
+        </div>
+
+        <div style="margin-top:16px">
+          <div class="row">
+            <button class="btn" id="btn_pa_compute" data-i18n="calculate">
+              <i class="fa-solid fa-calculator"></i> Calculate
+            </button>
+            <button class="btn btn-outline" id="btn_pa_reset" data-i18n="reset">
+              <i class="fa-solid fa-rotate-right"></i> Reset
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div>
+        <label data-i18n="fittings">Fittings (enter counts)</label>
+        <div class="fittings-list">
+          <div class="fitting">
+            <label data-i18n="elbow_90">90° Elbow</label>
+            <input id="cnt_el90" type="number" value="0" min="0">
+          </div>
+          <div class="fitting">
+            <label data-i18n="elbow_45">45° Elbow</label>
+            <input id="cnt_el45" type="number" value="0" min="0">
+          </div>
+          <div class="fitting">
+            <label data-i18n="t_piece">T-piece</label>
+            <input id="cnt_t" type="number" value="0" min="0">
+          </div>
+          <div class="fitting">
+            <label data-i18n="damper">Damper</label>
+            <input id="cnt_damp" type="number" value="0" min="0">
+          </div>
+        </div>
+        
+        <label style="margin-top:12px" data-i18n="length">Duct Length (m)</label>
+        <input id="pa_length" type="number" step="any" value="10.0">
+        
+        <div id="pa_result" class="result" style="display:none"></div>
+        
+        <div class="recommendation" id="pa_recommendation" style="display:none">
+          <strong>✓</strong> <span data-i18n="pressure_ok">Pressure drop within acceptable range</span>
+        </div>
+
+        <div class="warning-box" id="pa_warning" style="display:none">
+          <strong>⚠</strong> <span data-i18n="pressure_high">High pressure drop - consider larger duct size</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Duct Sizing Panel -->
+  <section id="duct" class="panel" role="tabpanel" aria-labelledby="tab_duct">
+    <h2 data-i18n="duct_title">HVAC Duct Sizing</h2>
+    <div class="grid2">
+      <div>
+        <div class="section-title" data-i18n="input_params">Input Parameters</div>
+        
+        <label data-i18n="flow_q">Flow rate Q (m³/h)</label>
+        <input id="duct_flow" type="number" step="any" placeholder="1000" value="1000">
+        
+        <label style="margin-top:12px" data-i18n="velocity_limit">Maximum Velocity (m/s)</label>
+        <select id="duct_velocity">
+          <option value="2.5">2.5 m/s (Low noise)</option>
+          <option value="4.0" selected>4.0 m/s (Standard)</option>
+          <option value="6.0">6.0 m/s (High velocity)</option>
+          <option value="8.0">8.0 m/s (Industrial)</option>
+        </select>
+
+        <label style="margin-top:12px" data-i18n="duct_type">Duct Type</label>
+        <select id="duct_type">
+          <option value="circular" data-i18n="circular">Circular</option>
+          <option value="rectangular" data-i18n="rectangular">Rectangular</option>
+        </select>
+
+        <div id="duct_aspect" style="display:none; margin-top:12px">
+          <label data-i18n="aspect_ratio">Aspect Ratio (Width:Height)</label>
+          <select id="aspect_ratio">
+            <option value="1">1:1 (Square)</option>
+            <option value="2" selected>2:1</option>
+            <option value="3">3:1</option>
+            <option value="4">4:1</option>
+          </select>
+        </div>
+
+        <div style="margin-top:16px">
+          <button class="btn btn-success" id="btn_duct_calculate" data-i18n="calculate_size">
+            <i class="fa-solid fa-ruler"></i> Calculate Duct Size
+          </button>
+        </div>
+      </div>
+      
+      <div>
+        <div class="section-title" data-i18n="results">Results</div>
+        
+        <div id="duct_result" class="result success" style="display:none"></div>
+        
+        <div class="section-title" data-i18n="standard_sizes">Standard Sizes</div>
+        <div class="chips" id="standard_sizes"></div>
+
+        <div class="recommendation" id="duct_recommendation" style="display:none">
+          <span data-i18n="recommended_size">Recommended size based on flow and velocity</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title" data-i18n="pressure_calc">Pressure Calculation</div>
+    <div class="grid3">
+      <div>
+        <label data-i18n="duct_length">Duct Length (m)</label>
+        <input id="duct_pressure_length" type="number" value="20" step="any">
+      </div>
+      <div>
+        <label data-i18n="fittings_loss">Fittings Loss (Pa)</label>
+        <input id="duct_fittings_loss" type="number" value="50" step="any">
+      </div>
+      <div style="display:flex; align-items:flex-end">
+        <button class="btn btn-warning" id="btn_calc_pressure" data-i18n="calculate_pressure" style="width:100%">
+          <i class="fa-solid fa-gauge"></i> Calculate ΔP
+        </button>
+      </div>
+    </div>
+    <div id="pressure_result" class="result warning" style="display:none"></div>
+  </section>
+
+  <!-- Plumbing Panel -->
+  <section id="plumbing" class="panel" role="tabpanel" aria-labelledby="tab_plumbing">
+    <h2 data-i18n="plumbing_title">Plumbing Calculator</h2>
+    <div class="grid2">
+      <div>
+        <div class="section-title" data-i18n="pipe_sizing">Pipe Sizing</div>
+        
+        <label data-i18n="flow_q">Flow rate (L/min)</label>
+        <input id="plumbing_flow" type="number" step="any" placeholder="50" value="50">
+        
+        <label style="margin-top:12px" data-i18n="pipe_material">Pipe Material</label>
+        <select id="pipe_material">
+          <option value="copper">Copper</option>
+          <option value="pex">PEX</option>
+          <option value="pvc">PVC</option>
+          <option value="galv_steel">Galvanized Steel</option>
+        </select>
+
+        <label style="margin-top:12px" data-i18n="velocity_limit">Maximum Velocity (m/s)</label>
+        <select id="plumbing_velocity">
+          <option value="1.0">1.0 m/s (Quiet)</option>
+          <option value="1.5" selected>1.5 m/s (Standard)</option>
+          <option value="2.0">2.0 m/s (High flow)</option>
+          <option value="2.5">2.5 m/s (Maximum)</option>
+        </select>
+
+        <div style="margin-top:16px">
+          <button class="btn btn-success" id="btn_plumbing_calculate" data-i18n="calculate_pipe">
+            <i class="fa-solid fa-pipe"></i> Calculate Pipe Size
+          </button>
+        </div>
+
+        <div id="plumbing_result" class="result success" style="display:none"></div>
+      </div>
+      
+      <div>
+        <div class="section-title" data-i18n="pump_head">Pump Head Calculation</div>
+        
+        <label data-i18n="static_head">Static Head (m)</label>
+        <input id="static_head" type="number" step="any" value="10">
+        
+        <label style="margin-top:12px" data-i18n="friction_loss">Friction Loss (m)</label>
+        <input id="friction_loss" type="number" step="any" value="5">
+        
+        <label style="margin-top:12px" data-i18n="pressure_required">Pressure Required (bar)</label>
+        <input id="pressure_required" type="number" step="any" value="2">
+        
+        <div style="margin-top:16px">
+          <button class="btn btn-warning" id="btn_pump_calculate" data-i18n="calculate_pump">
+            <i class="fa-solid fa-pump"></i> Calculate Pump Head
+          </button>
+        </div>
+
+        <div id="pump_result" class="result warning" style="display:none"></div>
+
+        <div class="info-box">
+          <div class="small" data-i18n="pump_note">Total Head = Static Head + Friction Loss + Pressure Head</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Velocity Panel -->
+  <section id="ms" class="panel" role="tabpanel" aria-labelledby="tab_ms">
+    <h2 data-i18n="ms_title">Velocity / Diameter Calculator</h2>
+    <div class="grid2">
+      <div>
+        <label data-i18n="flow_q">Flow Q (m³/h)</label>
+        <input id="ms_q" type="number" step="any" placeholder="500">
+        
+        <label style="margin-top:12px" data-i18n="diameter">Diameter D (mm)</label>
+        <input id="ms_d" type="number" step="any" placeholder="200">
+        
+        <div style="margin-top:16px; display:flex; gap:10px">
+          <button class="btn" id="btn_ms_v" data-i18n="compute_v">
+            <i class="fa-solid fa-wind"></i> Compute Velocity
+          </button>
+          <button class="btn btn-outline" id="btn_ms_d" data-i18n="compute_d">
+            <i class="fa-solid fa-circle"></i> Compute Diameter
+          </button>
+        </div>
+        <div id="ms_result" class="result" style="display:none"></div>
+      </div>
+      <div>
+        <div class="info-box">
+          <div class="small" data-i18n="velocity_guide"><strong>Velocity Guidelines:</strong><br>• 2-4 m/s (Quiet systems)<br>• 4-6 m/s (Standard HVAC)<br>• 6-8 m/s (Industrial systems)</div>
+        </div>
+        
+        <div class="warning-box" style="margin-top:12px">
+          <div class="small" data-i18n="noise_warning">⚠ Velocities above 6 m/s may generate significant noise</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Acoustic Panel -->
+  <section id="lwlp" class="panel" role="tabpanel" aria-labelledby="tab_lwlp">
+    <h2 data-i18n="lwlp_title">Acoustic Conversion Lw ↔ Lp</h2>
+    <div class="grid2">
+      <div>
+        <label data-i18n="conversion">Conversion Type</label>
+        <select id="lwlp_mode">
+          <option value="lw2lp" data-i18n="lw_to_lp">Lw → Lp</option>
+          <option value="lp2lw" data-i18n="lp_to_lw">Lp → Lw</option>
+        </select>
+        
+        <label style="margin-top:12px" data-i18n="lw">Sound Power Lw (dB)</label>
+        <input id="lw_val" type="number" placeholder="80">
+        
+        <label style="margin-top:12px" data-i18n="lp">Sound Pressure Lp (dB)</label>
+        <input id="lp_val" type="number" placeholder="65">
+        
+        <label style="margin-top:12px" data-i18n="distance">Distance r (m)</label>
+        <input id="lwlp_r" type="number" value="1">
+        
+        <label style="margin-top:12px" data-i18n="directivity">Directivity Q</label>
+        <input id="lwlp_q" type="number" value="2">
+        
+        <div style="margin-top:16px; display:flex; gap:10px">
+          <button class="btn" id="btn_lwlp_convert" data-i18n="convert">
+            <i class="fa-solid fa-exchange-alt"></i> Convert
+          </button>
+          <button class="btn btn-outline" id="btn_lwlp_reset" data-i18n="reset">
+            <i class="fa-solid fa-rotate-right"></i> Reset
+          </button>
+        </div>
+        <div id="lwlp_result" class="result" style="display:none"></div>
+      </div>
+      <div>
+        <div class="info-box">
+          <div class="small"><strong>Formula:</strong><br>Lp = Lw + 10·log₁₀(Q/(4πr²))</div>
+          <div class="small" style="margin-top:12px"><strong>Directivity Q:</strong><br>• 1 = Free field<br>• 2 = Half space (floor/wall)<br>• 4 = Quarter space (corner)<br>• 8 = Eighth space (room corner)</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- About Us Panel -->
+  <section id="about" class="panel" role="tabpanel" aria-labelledby="tab_about">
+    <h2 data-i18n="about_title">About Ophi</h2>
+    <div class="grid2">
+      <div>
+        <div class="section-title" data-i18n="about_company">Company Info</div>
+        <div class="info-box">
+          <p data-i18n="about_desc">Scair is an ultimate MEP (Mechanical, Electrical, Plumbing) helper application designed to assist engineers and technicians with critical HVAC, ductwork, plumbing, and acoustic calculations.</p>
+          <p style="margin-top:12px" data-i18n="about_mission">Our mission is to simplify complex engineering calculations and provide instant, reliable results for professional MEP design and installation.</p>
+        </div>
+
+        <div class="section-title" style="margin-top:24px" data-i18n="contact_info">Contact Us</div>
+        <label for="contact_name" data-i18n="contact_name">Name</label>
+        <input id="contact_name" type="text" placeholder="Your name">
+        
+        <label style="margin-top:12px" for="contact_email" data-i18n="contact_email">Email</label>
+        <input id="contact_email" type="email" placeholder="your.email@example.com">
+        
+        <label style="margin-top:12px" for="contact_subject" data-i18n="contact_subject">Subject</label>
+        <input id="contact_subject" type="text" placeholder="Subject">
+        
+        <label style="margin-top:12px" for="contact_message" data-i18n="contact_message">Message</label>
+        <textarea id="contact_message" style="height:100px; font-family: inherit" placeholder="Your message..."></textarea>
+        
+        <div style="margin-top:16px">
+          <button class="btn btn-success" id="btn_contact_send" data-i18n="send_message">
+            <i class="fa-solid fa-paper-plane"></i> Send Message
+          </button>
+        </div>
+        <div id="contact_result" class="result" style="display:none"></div>
+
+        <div class="section-title" style="margin-top:24px" data-i18n="follow_us">Follow Us</div>
+        <div class="info-box">
+          <a href="https://instagram.com/m_mouflih" target="_blank" style="color: var(--accent); text-decoration: none; font-weight: 600;">
+            <i class="fa-brands fa-instagram"></i> @m_mouflih
+          </a>
+        </div>
+      </div>
+
+      <div>
+        <div class="section-title" data-i18n="features">Features</div>
+        <div class="info-box">
+          <strong>✓ Pressure Loss Calculator</strong>
+          <p class="small" style="margin-top:6px">Calculate ductwork pressure drops for circular and rectangular ducts with fittings.</p>
+        </div>
+        <div class="info-box" style="margin-top:12px">
+          <strong>✓ HVAC Duct Sizing</strong>
+          <p class="small" style="margin-top:6px">Determine optimal duct dimensions based on flow rates and velocity limits.</p>
+        </div>
+        <div class="info-box" style="margin-top:12px">
+          <strong>✓ Plumbing Calculations</strong>
+          <p class="small" style="margin-top:6px">Size pipes and calculate pump head requirements for water systems.</p>
+        </div>
+        <div class="info-box" style="margin-top:12px">
+          <strong>✓ Velocity & Diameter</strong>
+          <p class="small" style="margin-top:6px">Quick conversions between flow rate, diameter, and velocity.</p>
+        </div>
+        <div class="info-box" style="margin-top:12px">
+          <strong>✓ Acoustic Analysis</strong>
+          <p class="small" style="margin-top:6px">Convert between sound power (Lw) and sound pressure (Lp) levels.</p>
+        </div>
+        
+        <div class="section-title" style="margin-top:24px" data-i18n="version">Version</div>
+        <div class="small">Ophi v3.0.0</div>
+        <div class="small" style="margin-top:6px">© 2026 Ophi. All rights reserved.</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer data-i18n="footer">Scair V3.10 — MEP Assistant · Ophi © 2026</footer>
+</div>
+
+<script>
+// ======= APPLICATION STATE =======
+const AppState = {
+  currentLang: localStorage.getItem('scair_lang') || 'en',
+  currentTheme: localStorage.getItem('scair_theme') || 'light',
+  currentTab: 'pa'
+};
+
+// ======= TRANSLATIONS =======
+const translations = {
+  en: {
+    pressure_tab: "Pressure Loss",
+    duct_tab: "Duct Sizing", 
+    plumbing_tab: "Plumbing",
+    velocity_tab: "Velocity",
+    acoustic_tab: "Acoustic",
+    calculate: "Calculate",
+    reset: "Reset",
+    compute: "Compute",
+    convert: "Convert",
+    pa_title: "Pressure Loss Calculator",
+    geometry: "Duct Geometry",
+    circular: "Circular Duct",
+    rectangular: "Rectangular Duct",
+    flow_q: "Flow rate Q (m³/h)",
+    diameter: "Diameter D (mm)",
+    width: "Width a (mm)",
+    height: "Height b (mm)",
+    fittings: "Fittings (enter counts)",
+    elbow_90: "90° Elbow",
+    elbow_45: "45° Elbow", 
+    t_piece: "T-piece",
+    damper: "Damper",
+    length: "Duct Length (m)",
+    material_note: "Material: Galvanized steel (ε=0.15mm)",
+    pressure_ok: "Pressure drop within acceptable range",
+    pressure_high: "High pressure drop - consider larger duct size",
+    duct_title: "HVAC Duct Sizing",
+    input_params: "Input Parameters",
+    velocity_limit: "Maximum Velocity (m/s)",
+    duct_type: "Duct Type",
+    aspect_ratio: "Aspect Ratio (Width:Height)",
+    calculate_size: "Calculate Duct Size",
+    results: "Results",
+    standard_sizes: "Standard Sizes",
+    recommended_size: "Recommended size based on flow and velocity",
+    pressure_calc: "Pressure Calculation",
+    duct_length: "Duct Length (m)",
+    fittings_loss: "Fittings Loss (Pa)",
+    total_pressure: "Total Pressure Drop",
+    calculate_pressure: "Calculate ΔP",
+    plumbing_title: "Plumbing Calculator",
+    pipe_sizing: "Pipe Sizing",
+    pipe_material: "Pipe Material",
+    calculate_pipe: "Calculate Pipe Size",
+    pump_head: "Pump Head Calculation",
+    static_head: "Static Head (m)",
+    friction_loss: "Friction Loss (m)",
+    pressure_required: "Pressure Required (bar)",
+    calculate_pump: "Calculate Pump Head",
+    pump_note: "Total Head = Static Head + Friction Loss + Pressure Head",
+    ms_title: "Velocity / Diameter Calculator",
+    compute_v: "Compute Velocity",
+    compute_d: "Compute Diameter",
+    velocity_guide: "Velocity Guidelines",
+    noise_warning: "Velocities above 6 m/s may generate significant noise",
+    lwlp_title: "Acoustic Conversion Lw ↔ Lp",
+    conversion: "Conversion Type",
+    lw_to_lp: "Lw → Lp",
+    lp_to_lw: "Lp → Lw",
+    lw: "Sound Power Lw (dB)",
+    lp: "Sound Pressure Lp (dB)",
+    distance: "Distance r (m)",
+    directivity: "Directivity Q",
+    about_tab: "About Us",
+    about_title: "About Ophi",
+    about_company: "Company Info",
+    about_desc: "Ophi is an all-in-one MEP helper for plumbing, HVAC, and fire protection — making ductwork, piping, pump and acoustic calculations faster and easier for engineers and technicians.",
+    about_mission: "Our mission is to simplify complex engineering calculations and provide instant, reliable results for professional MEP design and installation.",
+    contact_info: "Contact Us",
+    follow_us: "Follow Us",
+    instagram: "Instagram",
+    contact_name: "Name",
+    contact_email: "Email",
+    contact_subject: "Subject",
+    contact_message: "Message",
+    send_message: "Send Message",
+    features: "Features",
+    version: "Version",
+    footer: "Ophi v3.0.0 — MEP Assistant · Ophi © 2026"
+  },
+  fr: {
+    pressure_tab: "Pertes de Charge",
+      follow_us: "Suivez-nous",
+      instagram: "Instagram",
+    duct_tab: "Dimensionnement Conduits",
+    plumbing_tab: "Plomberie",
+    velocity_tab: "Vitesse",
+    acoustic_tab: "Acoustique",
+    calculate: "Calculer",
+    reset: "Réinitialiser",
+    compute: "Calculer",
+    convert: "Convertir",
+    pa_title: "Calculateur de Pertes de Charge",
+    geometry: "Géométrie du Conduit",
+    circular: "Conduit Circulaire",
+    rectangular: "Conduit Rectangulaire",
+    flow_q: "Débit Q (m³/h)",
+    diameter: "Diamètre D (mm)",
+    width: "Largeur a (mm)",
+    height: "Hauteur b (mm)",
+    fittings: "Accessoires (entrer les quantités)",
+    elbow_90: "Coude 90°",
+    elbow_45: "Coude 45°",
+    t_piece: "Té",
+    damper: "Registre",
+    length: "Longueur du Conduit (m)",
+    material_note: "Matériau: Acier galvanisé (ε=0.15mm)",
+    pressure_ok: "Perte de charge dans la plage acceptable",
+    pressure_high: "Perte de charge élevée - envisager une taille plus grande",
+    duct_title: "Dimensionnement des Conduits HVAC",
+    input_params: "Paramètres d'Entrée",
+    velocity_limit: "Vitesse Maximale (m/s)",
+    duct_type: "Type de Conduit",
+    aspect_ratio: "Ratio d'Aspect (Largeur:Hauteur)",
+    calculate_size: "Calculer la Taille du Conduit",
+    results: "Résultats",
+    standard_sizes: "Tailles Standard",
+    recommended_size: "Taille recommandée selon le débit et la vitesse",
+    pressure_calc: "Calcul de Pression",
+    duct_length: "Longueur du Conduit (m)",
+    fittings_loss: "Perte des Accessoires (Pa)",
+    total_pressure: "Perte de Charge Totale",
+    calculate_pressure: "Calculer ΔP",
+    plumbing_title: "Calculateur de Plomberie",
+    pipe_sizing: "Dimensionnement des Tuyaux",
+    pipe_material: "Matériau du Tuyau",
+    calculate_pipe: "Calculer la Taille du Tuyau",
+    pump_head: "Calcul de Hauteur Manométrique",
+    static_head: "Hauteur Statique (m)",
+    friction_loss: "Perte de Charge (m)",
+    pressure_required: "Pression Requise (bar)",
+    calculate_pump: "Calculer la HMT",
+    pump_note: "HMT Totale = Hauteur Statique + Perte de Charge + Hauteur de Pression",
+    ms_title: "Calculateur Vitesse / Diamètre",
+    compute_v: "Calculer Vitesse",
+    compute_d: "Calculer Diamètre",
+    velocity_guide: "Guide des Vitesses",
+    noise_warning: "Les vitesses supérieures à 6 m/s peuvent générer du bruit",
+    lwlp_title: "Conversion Acoustique Lw ↔ Lp",
+    conversion: "Type de Conversion",
+    lw_to_lp: "Lw → Lp",
+    lp_to_lw: "Lp → Lw",
+    lw: "Puissance Sonore Lw (dB)",
+    lp: "Pression Sonore Lp (dB)",
+    distance: "Distance r (m)",
+    about_title: "À propos d'Ophi",
+    about_desc: "Ophi (Octopot) est une application MEP conçue pour la plomberie, la CVC et la protection incendie — elle aide les ingénieurs et techniciens pour les calculs de gaines, tuyauterie, pompes et acoustique.",
+    directivity: "Directivité Q",
+    footer: "Ophi v3.0.0 — MEP Assistant · Ophi © 2026"
+  }
+};
+
+// ======= STANDARD SIZES =======
+const standardSizes = {
+  circular: [80, 100, 125, 150, 160, 200, 250, 315, 355, 400, 450, 500, 560, 630, 710, 800],
+  rectangular: [
+    {w:100, h:50}, {w:150, h:75}, {w:200, h:100}, {w:250, h:125}, {w:300, h:150},
+    {w:400, h:200}, {w:500, h:250}, {w:600, h:300}, {w:800, h:400}, {w:1000, h:500}
+  ]
+};
+
+// ======= UTILITY FUNCTIONS =======
+function findNearestSize(required, type) {
+  const sizes = standardSizes[type];
+  return sizes.reduce((prev, curr) => 
+    Math.abs(curr - required) < Math.abs(prev - required) ? curr : prev
+  );
+}
+
+function findNearestRectangularSize(width, height) {
+  return standardSizes.rectangular.reduce((prev, curr) => {
+    const prevDiff = Math.abs(prev.w - width) + Math.abs(prev.h - height);
+    const currDiff = Math.abs(curr.w - width) + Math.abs(curr.h - height);
+    return currDiff < prevDiff ? curr : prev;
+  });
+}
+
+function showAlert(message) {
+  alert(message);
+}
+
+function showElement(id) {
+  document.getElementById(id).style.display = 'block';
+}
+
+function hideElement(id) {
+  document.getElementById(id).style.display = 'none';
+}
+
+// ======= THEME SYSTEM =======
+function initTheme() {
+  if (AppState.currentTheme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.querySelector('#theme_toggle i').className = 'fa-solid fa-sun';
+    document.getElementById('logo-light').style.display = 'none';
+    document.getElementById('logo-dark').style.display = 'block';
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    document.querySelector('#theme_toggle i').className = 'fa-solid fa-moon';
+    document.getElementById('logo-light').style.display = 'block';
+    document.getElementById('logo-dark').style.display = 'none';
+  }
+}
+
+function toggleTheme() {
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  
+  if (isDark) {
+    document.documentElement.removeAttribute('data-theme');
+    document.querySelector('#theme_toggle i').className = 'fa-solid fa-moon';
+    document.getElementById('logo-light').style.display = 'block';
+    document.getElementById('logo-dark').style.display = 'none';
+    AppState.currentTheme = 'light';
+  } else {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.querySelector('#theme_toggle i').className = 'fa-solid fa-sun';
+    document.getElementById('logo-light').style.display = 'none';
+    document.getElementById('logo-dark').style.display = 'block';
+    AppState.currentTheme = 'dark';
+  }
+  
+  localStorage.setItem('scair_theme', AppState.currentTheme);
+}
+
+// ======= TRANSLATION SYSTEM =======
+function applyTranslations(lang) {
+  const dict = translations[lang];
+  if (!dict) return;
+  
+  document.querySelectorAll('[data-i18n]').forEach(element => {
+    const key = element.getAttribute('data-i18n');
+    if (dict[key]) {
+      if (element.tagName === 'INPUT' || element.tagName === 'BUTTON') {
+        if (element.value && element.type !== 'number') {
+          element.value = dict[key];
+        }
+      } else {
+        element.textContent = dict[key];
+      }
+    }
+  });
+  
+  document.getElementById('lang_toggle').textContent = lang === 'en' ? 'FR' : 'EN';
+}
+
+function toggleLanguage() {
+  AppState.currentLang = AppState.currentLang === 'en' ? 'fr' : 'en';
+  localStorage.setItem('scair_lang', AppState.currentLang);
+  applyTranslations(AppState.currentLang);
+}
+
+// ======= TAB SYSTEM =======
+function switchTab(tabId) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  
+  document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+  
+  AppState.currentTab = tabId;
+}
+
+// ======= PRESSURE LOSS CALCULATIONS =======
+function calculatePressureLoss() {
+  const shape = document.getElementById('pa_shape').value;
+  let Q_m3h, D_m, a_m, b_m;
+  
+  if (shape === 'circular') {
+    Q_m3h = parseFloat(document.getElementById('pa_q').value);
+    D_m = (parseFloat(document.getElementById('pa_d').value) || 0) / 1000;
+    if (!Q_m3h || !D_m) {
+      showAlert(AppState.currentLang === 'en' ? 'Please enter both flow rate and diameter' : 'Veuillez entrer le débit et le diamètre');
+      return;
+    }
+  } else {
+    Q_m3h = parseFloat(document.getElementById('pa_q_rect').value);
+    a_m = (parseFloat(document.getElementById('rect_a').value) || 0) / 1000;
+    b_m = (parseFloat(document.getElementById('rect_b').value) || 0) / 1000;
+    if (!Q_m3h || !a_m || !b_m) {
+      showAlert(AppState.currentLang === 'en' ? 'Please enter flow rate, width, and height' : 'Veuillez entrer le débit, la largeur et la hauteur');
+      return;
+    }
+    D_m = (2 * a_m * b_m) / (a_m + b_m);
+  }
+  
+  const Q = Q_m3h / 3600;
+  const area = shape === 'circular' ? Math.PI * Math.pow(D_m/2, 2) : a_m * b_m;
+  const v = Q / area;
+  const Re = (v * D_m) / 0.000015;
+  
+  const f = Re < 2000 ? 64 / Math.max(Re, 1) : 0.11 * Math.pow((0.00015/D_m + 68/Re), 0.25);
+  
+  const dp_per_m = f * 1.2 * Math.pow(v, 2) / (2 * D_m);
+  const length = parseFloat(document.getElementById('pa_length').value) || 1.0;
+  
+  const fittings = {
+    el90: parseFloat(document.getElementById('cnt_el90').value) || 0,
+    el45: parseFloat(document.getElementById('cnt_el45').value) || 0,
+    t: parseFloat(document.getElementById('cnt_t').value) || 0,
+    damp: parseFloat(document.getElementById('cnt_damp').value) || 0
+  };
+  
+  const K_total = (fittings.el90 * 1.0) + (fittings.el45 * 0.5) + (fittings.t * 1.5) + (fittings.damp * 2.0);
+  const fittings_loss = K_total * (1.2 * Math.pow(v, 2) / 2);
+  const straight_loss = dp_per_m * length;
+  const total_loss = straight_loss + fittings_loss;
+  
+  const result = document.getElementById('pa_result');
+  result.style.display = 'block';
+  result.className = total_loss < 100 ? 'result success' : 'result warning';
+  result.innerHTML = AppState.currentLang === 'en'
+    ? `<strong>Velocity:</strong> ${v.toFixed(2)} m/s | <strong>Re:</strong> ${Re.toFixed(0)} | <strong>f:</strong> ${f.toFixed(4)}<br><strong>Total ΔP:</strong> ${total_loss.toFixed(1)} Pa (Straight: ${straight_loss.toFixed(1)} Pa + Fittings: ${fittings_loss.toFixed(1)} Pa)`
+    : `<strong>Vitesse:</strong> ${v.toFixed(2)} m/s | <strong>Re:</strong> ${Re.toFixed(0)} | <strong>f:</strong> ${f.toFixed(4)}<br><strong>ΔP Total:</strong> ${total_loss.toFixed(1)} Pa (Droit: ${straight_loss.toFixed(1)} Pa + Raccords: ${fittings_loss.toFixed(1)} Pa)`;
+  
+  document.getElementById('pa_recommendation').style.display = total_loss < 100 ? 'block' : 'none';
+  document.getElementById('pa_warning').style.display = total_loss >= 100 ? 'block' : 'none';
+}
+
+function resetPressureLoss() {
+  document.getElementById('pa_q').value = '';
+  document.getElementById('pa_d').value = '';
+  document.getElementById('pa_q_rect').value = '';
+  document.getElementById('rect_a').value = '';
+  document.getElementById('rect_b').value = '';
+  document.getElementById('pa_length').value = '10.0';
+  document.getElementById('cnt_el90').value = '0';
+  document.getElementById('cnt_el45').value = '0';
+  document.getElementById('cnt_t').value = '0';
+  document.getElementById('cnt_damp').value = '0';
+  hideElement('pa_result');
+  hideElement('pa_recommendation');
+  hideElement('pa_warning');
+}
+
+// ======= DUCT SIZING CALCULATIONS =======
+function calculateDuctSize() {
+  const flow = parseFloat(document.getElementById('duct_flow').value);
+  const maxVelocity = parseFloat(document.getElementById('duct_velocity').value);
+  const ductType = document.getElementById('duct_type').value;
+  
+  if (!flow || flow <= 0) {
+    showAlert(AppState.currentLang === 'en' ? 'Please enter a valid flow rate' : 'Veuillez entrer un débit valide');
+    return;
+  }
+  
+  const flow_m3s = flow / 3600;
+  let resultText = '';
+  
+  if (ductType === 'circular') {
+    const requiredDiameter = Math.sqrt((4 * flow_m3s) / (Math.PI * maxVelocity)) * 1000;
+    const nearestSize = findNearestSize(requiredDiameter, 'circular');
+    resultText = AppState.currentLang === 'en'
+      ? `Required: Ø${requiredDiameter.toFixed(0)} mm | Nearest Standard: Ø${nearestSize} mm`
+      : `Requis: Ø${requiredDiameter.toFixed(0)} mm | Standard le plus proche: Ø${nearestSize} mm`;
+  } else {
+    const aspectRatio = parseFloat(document.getElementById('aspect_ratio').value);
+    const area = flow_m3s / maxVelocity;
+    const height = Math.sqrt(area / aspectRatio) * 1000;
+    const width = height * aspectRatio;
+    const nearestRect = findNearestRectangularSize(width, height);
+    resultText = AppState.currentLang === 'en'
+      ? `Required: ${width.toFixed(0)}×${height.toFixed(0)} mm | Nearest: ${nearestRect.w}×${nearestRect.h} mm`
+      : `Requis: ${width.toFixed(0)}×${height.toFixed(0)} mm | Plus proche: ${nearestRect.w}×${nearestRect.h} mm`;
+  }
+  
+  const result = document.getElementById('duct_result');
+  result.style.display = 'block';
+  result.textContent = resultText;
+  showElement('duct_recommendation');
+  displayStandardSizes(ductType, flow, maxVelocity);
+}
+
+function displayStandardSizes(type, flow, velocity) {
+  const container = document.getElementById('standard_sizes');
+  container.innerHTML = '';
+  
+  const sizes = standardSizes[type];
+  const flow_m3s = flow / 3600;
+  
+  sizes.forEach(size => {
+    const chip = document.createElement('div');
+    chip.className = 'chip';
+    
+    if (type === 'circular') {
+      const area = Math.PI * Math.pow(size/2000, 2);
+      const actualVelocity = flow_m3s / area;
+      chip.textContent = `Ø${size}mm`;
+      chip.title = `${AppState.currentLang === 'en' ? 'Velocity' : 'Vitesse'}: ${actualVelocity.toFixed(1)} m/s`;
+      if (actualVelocity <= velocity * 1.1) chip.classList.add('active');
+    } else {
+      const area = (size.w / 1000) * (size.h / 1000);
+      const actualVelocity = flow_m3s / area;
+      chip.textContent = `${size.w}×${size.h}mm`;
+      chip.title = `${AppState.currentLang === 'en' ? 'Velocity' : 'Vitesse'}: ${actualVelocity.toFixed(1)} m/s`;
+      if (actualVelocity <= velocity * 1.1) chip.classList.add('active');
+    }
+    
+    container.appendChild(chip);
+  });
+}
+
+function calculateDuctPressure() {
+  const flow = parseFloat(document.getElementById('duct_flow').value);
+  const length = parseFloat(document.getElementById('duct_pressure_length').value);
+  const fittingsLoss = parseFloat(document.getElementById('duct_fittings_loss').value);
+  const velocity = parseFloat(document.getElementById('duct_velocity').value);
+  const ductType = document.getElementById('duct_type').value;
+  
+  if (!flow || flow <= 0) {
+    showAlert(AppState.currentLang === 'en' ? 'Please calculate duct size first' : 'Veuillez d\'abord calculer la taille du conduit');
+    return;
+  }
+  
+  const flow_m3s = flow / 3600;
+  let diameter;
+  
+  if (ductType === 'circular') {
+    diameter = Math.sqrt((4 * flow_m3s) / (Math.PI * velocity));
+  } else {
+    const aspectRatio = parseFloat(document.getElementById('aspect_ratio').value);
+    const area = flow_m3s / velocity;
+    const height = Math.sqrt(area / aspectRatio);
+    const width = height * aspectRatio;
+    diameter = (2 * width * height) / (width + height);
+  }
+  
+  const v = flow_m3s / (Math.PI * Math.pow(diameter/2, 2));
+  const Re = (v * diameter) / 0.000015;
+  const f = 0.11 * Math.pow((0.00015/diameter + 68/Re), 0.25);
+  const straightLoss = f * 1.2 * Math.pow(v, 2) * length / (2 * diameter);
+  const totalLoss = straightLoss + fittingsLoss;
+  
+  const result = document.getElementById('pressure_result');
+  result.style.display = 'block';
+  result.textContent = AppState.currentLang === 'en'
+    ? `Total Pressure Drop: ${totalLoss.toFixed(1)} Pa (Straight: ${straightLoss.toFixed(1)} Pa + Fittings: ${fittingsLoss.toFixed(1)} Pa)`
+    : `Perte de Charge Totale: ${totalLoss.toFixed(1)} Pa (Droite: ${straightLoss.toFixed(1)} Pa + Raccords: ${fittingsLoss.toFixed(1)} Pa)`;
+}
+
+// ======= PLUMBING CALCULATIONS =======
+function calculatePipeSize() {
+  const flow_lmin = parseFloat(document.getElementById('plumbing_flow').value);
+  const maxVelocity = parseFloat(document.getElementById('plumbing_velocity').value);
+  const material = document.getElementById('pipe_material').value;
+  
+  if (!flow_lmin || flow_lmin <= 0) {
+    showAlert(AppState.currentLang === 'en' ? 'Please enter a valid flow rate' : 'Veuillez entrer un débit valide');
+    return;
+  }
+  
+  const flow_m3s = flow_lmin / 60000;
+  const requiredDiameter = Math.sqrt((4 * flow_m3s) / (Math.PI * maxVelocity)) * 1000;
+  
+  const materialNames = {
+    copper: AppState.currentLang === 'en' ? 'Copper' : 'Cuivre',
+    pex: 'PEX',
+    pvc: 'PVC',
+    galv_steel: AppState.currentLang === 'en' ? 'Galvanized Steel' : 'Acier Galvanisé'
+  };
+  
+  const result = document.getElementById('plumbing_result');
+  result.style.display = 'block';
+  result.textContent = AppState.currentLang === 'en'
+    ? `Required Pipe Diameter: ${requiredDiameter.toFixed(1)} mm (${materialNames[material]}, ${maxVelocity} m/s velocity)`
+    : `Diamètre de Tuyau Requis: ${requiredDiameter.toFixed(1)} mm (${materialNames[material]}, vitesse ${maxVelocity} m/s)`;
+}
+
+function calculatePumpHead() {
+  const staticHead = parseFloat(document.getElementById('static_head').value) || 0;
+  const frictionLoss = parseFloat(document.getElementById('friction_loss').value) || 0;
+  const pressureRequired = parseFloat(document.getElementById('pressure_required').value) || 0;
+  
+  const pressureHead = pressureRequired * 10.2;
+  const totalHead = staticHead + frictionLoss + pressureHead;
+  
+  const result = document.getElementById('pump_result');
+  result.style.display = 'block';
+  result.innerHTML = AppState.currentLang === 'en'
+    ? `<strong>Total Pump Head Required:</strong> ${totalHead.toFixed(1)} m<br><small>Static: ${staticHead.toFixed(1)}m + Friction: ${frictionLoss.toFixed(1)}m + Pressure: ${pressureHead.toFixed(1)}m</small>`
+    : `<strong>HMT Totale Requise:</strong> ${totalHead.toFixed(1)} m<br><small>Statique: ${staticHead.toFixed(1)}m + Frottement: ${frictionLoss.toFixed(1)}m + Pression: ${pressureHead.toFixed(1)}m</small>`;
+}
+
+// ======= VELOCITY CALCULATIONS =======
+function computeVelocity() {
+  const Q = parseFloat(document.getElementById('ms_q').value);
+  const D = parseFloat(document.getElementById('ms_d').value);
+
+  if (!Q || !D) {
+    showAlert(AppState.currentLang === 'en' ? 'Please enter flow and diameter' : 'Veuillez entrer le débit et le diamètre');
+    return;
+  }
+
+  const Qm3s = Q / 3600;
+  const Dm = D / 1000;
+  const area = Math.PI * Math.pow(Dm/2, 2);
+  const v = Qm3s / area;
+  const out = document.getElementById('ms_result');
+  out.style.display = 'block';
+  out.textContent = AppState.currentLang === 'en' ? `Velocity: ${v.toFixed(2)} m/s` : `Vitesse: ${v.toFixed(2)} m/s`;
+}
+
+function computeDiameter() {
+  const Q = parseFloat(document.getElementById('ms_q').value);
+  if (!Q) { showAlert(AppState.currentLang === 'en' ? 'Please enter flow' : 'Veuillez entrer le débit'); return; }
+  const Qm3s = Q / 3600;
+  const targetV = 4.0;
+  const area = Qm3s / targetV;
+  const Dm = Math.sqrt((4 * area) / Math.PI);
+  const Dmm = Dm * 1000;
+  const out = document.getElementById('ms_result');
+  out.style.display = 'block';
+  out.textContent = AppState.currentLang === 'en'
+    ? `Suggested diameter: ${Dmm.toFixed(0)} mm @ ${targetV} m/s`
+    : `Diamètre suggéré: ${Dmm.toFixed(0)} mm @ ${targetV} m/s`;
+}
+
+function convertLWLP() {
+  const mode = document.getElementById('lwlp_mode').value;
+  const lw = parseFloat(document.getElementById('lw_val').value) || 0;
+  const lp = parseFloat(document.getElementById('lp_val').value) || 0;
+  const r = parseFloat(document.getElementById('lwlp_r').value) || 1;
+  const Qdir = parseFloat(document.getElementById('lwlp_q').value) || 1;
+  const out = document.getElementById('lwlp_result');
+  out.style.display = 'block';
+
+  if (mode === 'lw2lp') {
+    if (!lw) { showAlert(AppState.currentLang === 'en' ? 'Please enter Lw value' : 'Veuillez entrer Lw'); return; }
+    const lpCalc = lw + 10 * Math.log10(Qdir / (4 * Math.PI * r * r));
+    out.textContent = AppState.currentLang === 'en'
+      ? `Estimated Lp: ${lpCalc.toFixed(1)} dB (at r=${r} m, Q=${Qdir})`
+      : `Lp estimé: ${lpCalc.toFixed(1)} dB (à r=${r} m, Q=${Qdir})`;
+  } else {
+    if (!lp) { showAlert(AppState.currentLang === 'en' ? 'Please enter Lp value' : 'Veuillez entrer Lp'); return; }
+    const lwCalc = lp - 10 * Math.log10(Qdir / (4 * Math.PI * r * r));
+    out.textContent = AppState.currentLang === 'en'
+      ? `Estimated Lw: ${lwCalc.toFixed(1)} dB (from Lp=${lp} dB at r=${r} m)`
+      : `Lw estimé: ${lwCalc.toFixed(1)} dB (à partir de Lp=${lp} dB à r=${r} m)`;
+  }
+}
+
+function resetLWLP() {
+  document.getElementById('lw_val').value = '';
+  document.getElementById('lp_val').value = '';
+  document.getElementById('lwlp_r').value = '1';
+  document.getElementById('lwlp_q').value = '2';
+  hideElement('lwlp_result');
+}
+
+// ======= CONTACT FORM =======
+function sendContactMessage() {
+  const name = document.getElementById('contact_name').value.trim();
+  const email = document.getElementById('contact_email').value.trim();
+  const subject = document.getElementById('contact_subject').value.trim();
+  const message = document.getElementById('contact_message').value.trim();
+
+  if (!name || !email || !subject || !message) {
+    showAlert(AppState.currentLang === 'en' ? 'Please fill all fields' : 'Veuillez remplir tous les champs');
+    return;
+  }
+
+  // Simple email validation
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    showAlert(AppState.currentLang === 'en' ? 'Please enter a valid email' : 'Veuillez entrer un email valide');
+    return;
+  }
+
+  // Simulate form submission (in production, send to backend)
+  const result = document.getElementById('contact_result');
+  result.style.display = 'block';
+  result.className = 'result success';
+  result.textContent = AppState.currentLang === 'en'
+    ? `✓ Thank you! Your message has been sent. We will contact you at ${email} soon.`
+    : `✓ Merci! Votre message a été envoyé. Nous vous contacterons à ${email} bientôt.`;
+
+  // Clear form
+  document.getElementById('contact_name').value = '';
+  document.getElementById('contact_email').value = '';
+  document.getElementById('contact_subject').value = '';
+  document.getElementById('contact_message').value = '';
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  // Hide loading screen and show app
+  setTimeout(() => {
+    const loadScreen = document.getElementById('loading-screen');
+    if (loadScreen) {
+      loadScreen.style.opacity = '0';
+    }
+    const appContent = document.getElementById('app-content');
+    if (appContent) {
+      appContent.style.display = 'block';
+    }
+    setTimeout(() => {
+      if (loadScreen) loadScreen.style.display = 'none';
+    }, 500);
+  }, 800);
+
+  initTheme();
+  applyTranslations(AppState.currentLang);
+
+  document.getElementById('btn_pa_compute')?.addEventListener('click', calculatePressureLoss);
+  document.getElementById('btn_pa_reset')?.addEventListener('click', resetPressureLoss);
+  document.getElementById('btn_duct_calculate')?.addEventListener('click', calculateDuctSize);
+  document.getElementById('btn_calc_pressure')?.addEventListener('click', calculateDuctPressure);
+  document.getElementById('btn_plumbing_calculate')?.addEventListener('click', calculatePipeSize);
+  document.getElementById('btn_pump_calculate')?.addEventListener('click', calculatePumpHead);
+  document.getElementById('btn_ms_v')?.addEventListener('click', computeVelocity);
+  document.getElementById('btn_ms_d')?.addEventListener('click', computeDiameter);
+  document.getElementById('btn_lwlp_convert')?.addEventListener('click', convertLWLP);
+  document.getElementById('btn_lwlp_reset')?.addEventListener('click', resetLWLP);
+  document.getElementById('btn_contact_send')?.addEventListener('click', sendContactMessage);
+
+  document.getElementById('theme_toggle')?.addEventListener('click', toggleTheme);
+  document.getElementById('lang_toggle')?.addEventListener('click', toggleLanguage);
+
+  document.querySelectorAll('.tab').forEach(t => { t.addEventListener('click', () => switchTab(t.dataset.tab)); });
+  switchTab(AppState.currentTab || 'pa');
+
+  // Toggle duct shape inputs
+  document.getElementById('pa_shape')?.addEventListener('change', () => {
+    const isCircular = document.getElementById('pa_shape').value === 'circular';
+    document.getElementById('circular_inputs').style.display = isCircular ? 'block' : 'none';
+    document.getElementById('rect_inputs').style.display = isCircular ? 'none' : 'block';
+  });
+
+  // Toggle duct type aspect ratio
+  document.getElementById('duct_type')?.addEventListener('change', () => {
+    document.getElementById('duct_aspect').style.display = 
+      document.getElementById('duct_type').value === 'rectangular' ? 'block' : 'none';
+  });
+});
+
+</script>
+</body>
+</html>
